@@ -13,7 +13,8 @@ function App() {
     }
   }, []);
 
-  const handleLogin = () => {
+  const handleLogin = (username) => {
+    localStorage.setItem("loggedInUser", username);
     setLoggedIn(true);
   };
 
