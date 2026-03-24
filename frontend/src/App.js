@@ -1,13 +1,34 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import "./App.css";
 import Login from "./pages/Login";
-import Dashboard from "./pages/dashboard";
+import Dashboard from "./pages/Dashboard";
 
 function App() {
   const [loggedIn, setLoggedIn] = useState(false);
 
+  useEffect(() => {
+    const user = localStorage.getItem("loggedInUser");
+    if (user) {
+      setLoggedIn(true);
+    }
+  }, []);
+
+  const handleLogin = () => {
+    setLoggedIn(true);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("loggedInUser");
+    setLoggedIn(false);
+  };
+
   return (
-    <div>
-      {loggedIn ? <Dashboard /> : <Login onLogin={() => setLoggedIn(true)} />}
+    <div className="App">
+      {loggedIn ? (
+        <Dashboard onLogout={handleLogout} />
+      ) : (
+        <Login onLogin={handleLogin} />
+      )}
     </div>
   );
 }
