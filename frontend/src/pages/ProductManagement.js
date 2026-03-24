@@ -1,60 +1,45 @@
 import React, { useEffect, useState } from "react";
+import "./ProductManagement.css";
 
 function ProductManagement() {
   const [products, setProducts] = useState([]);
   const [productName, setProductName] = useState("");
   const [category, setCategory] = useState("");
   const [price, setPrice] = useState("");
-  const [editId, setEditId] = useState(null);
+  const [editIndex, setEditIndex] = useState(null);
 
   useEffect(() => {
-    const savedProducts = JSON.parse(localStorage.getItem("products")) || [];
-    setProducts(savedProducts);
+    const storedProducts = localStorage.getItem("products");
+    if (storedProducts) {
+      setProducts(JSON.parse(storedProducts));
+    }
   }, []);
 
-  const saveProductsToLocalStorage = (updatedProducts) => {
-    localStorage.setItem("products", JSON.stringify(updatedProducts));
-    setProducts(updatedProducts);
-  };
+  useEffect(() => {
+    localStorage.setItem("products", JSON.stringify(products));
+  }, [products]);
 
-  const handleAddOrUpdateProduct = (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
 
-    if (
-      productName.trim() === "" ||
-      category.trim() === "" ||
-      price.trim() === ""
-    ) {
+    if (!productName || !category || !price) {
       alert("Please fill all fields");
       return;
     }
 
-    if (editId !== null) {
-      const updatedProducts = products.map((product) =>
-        product.id === editId
-          ? {
-              ...product,
-              name: productName,
-              category: category,
-              price: price,
-            }
-          : product
-      );
+    const newProduct = {
+      name: productName,
+      category: category,
+      price: price,
+    };
 
-      saveProductsToLocalStorage(updatedProducts);
-      setEditId(null);
-      alert("Product updated successfully");
+    if (editIndex !== null) {
+      const updatedProducts = [...products];
+      updatedProducts[editIndex] = newProduct;
+      setProducts(updatedProducts);
+      setEditIndex(null);
     } else {
-      const newProduct = {
-        id: Date.now(),
-        name: productName,
-        category: category,
-        price: price,
-      };
-
-      const updatedProducts = [...products, newProduct];
-      saveProductsToLocalStorage(updatedProducts);
-      alert("Product added successfully");
+      setProducts([...products, newProduct]);
     }
 
     setProductName("");
@@ -62,27 +47,24 @@ function ProductManagement() {
     setPrice("");
   };
 
-  const handleEdit = (product) => {
-    setProductName(product.name);
-    setCategory(product.category);
-    setPrice(product.price);
-    setEditId(product.id);
+  const handleEdit = (index) => {
+    setProductName(products[index].name);
+    setCategory(products[index].category);
+    setPrice(products[index].price);
+    setEditIndex(index);
   };
 
-  const handleDelete = (id) => {
-    const confirmDelete = window.confirm("Are you sure you want to delete this product?");
-    if (!confirmDelete) return;
-
-    const updatedProducts = products.filter((product) => product.id !== id);
-    saveProductsToLocalStorage(updatedProducts);
-    alert("Product deleted successfully");
+  const handleDelete = (index) => {
+    const updatedProducts = products.filter((_, i) => i !== index);
+    setProducts(updatedProducts);
   };
 
   return (
-    <div className="product-page">
-      <h1>Product Management</h1>
+    <div className="product-container">
+      <h1>Retail POS & Inventory System</h1>
+      <h2>Product Management</h2>
 
-      <form className="product-form" onSubmit={handleAddOrUpdateProduct}>
+      <form className="product-form" onSubmit={handleSubmit}>
         <input
           type="text"
           placeholder="Enter product name"
@@ -105,46 +87,52 @@ function ProductManagement() {
         />
 
         <button type="submit">
-          {editId !== null ? "Update Product" : "Add Product"}
+          {editIndex !== null ? "Update Product" : "Add Product"}
         </button>
       </form>
 
-      <div className="product-list">
-        <h2>Product List</h2>
+      <table className="product-table">
+        <thead>
+          <tr>
+            <th>S.No</th>
+            <th>Product Name</th>
+            <th>Category</th>
+            <th>Price</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
 
-        {products.length === 0 ? (
-          <p>No products added yet.</p>
-        ) : (
-          <table>
-            <thead>
-              <tr>
-                <th>Product Name</th>
-                <th>Category</th>
-                <th>Price</th>
-                <th>Actions</th>
+        <tbody>
+          {products.length > 0 ? (
+            products.map((product, index) => (
+              <tr key={index}>
+                <td>{index + 1}</td>
+                <td>{product.name}</td>
+                <td>{product.category}</td>
+                <td>₹ {product.price}</td>
+                <td>
+                  <button
+                    className="edit-btn"
+                    onClick={() => handleEdit(index)}
+                  >
+                    Edit
+                  </button>
+                  <button
+                    className="delete-btn"
+                    onClick={() => handleDelete(index)}
+                  >
+                    Delete
+                  </button>
+                </td>
               </tr>
-            </thead>
-
-            <tbody>
-              {products.map((product) => (
-                <tr key={product.id}>
-                  <td>{product.name}</td>
-                  <td>{product.category}</td>
-                  <td>₹ {product.price}</td>
-                  <td>
-                    <button className="edit-btn" onClick={() => handleEdit(product)}>
-                      Edit
-                    </button>
-                    <button className="delete-btn" onClick={() => handleDelete(product.id)}>
-                      Delete
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
+            ))
+          ) : (
+            <tr>
+              <td colSpan="5">No products added yet</td>
+            </tr>
+          )}
+        </tbody>
+      </table>
     </div>
   );
 }
